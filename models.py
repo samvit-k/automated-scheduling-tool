@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 from datetime import datetime
 
 class UserRequest(BaseModel):
@@ -30,3 +30,23 @@ class User(BaseModel):
    username: str
    password: str
    created_at: datetime
+
+class ScheduleSaveRequest(BaseModel):
+   """
+   Pydantic model for schedule save requests.
+   Contains user_id and schedule_data for saving/updating schedules.
+   """
+   user_id: int
+   schedule_data: Dict[str, Any]
+
+class ScheduleResponse(BaseModel):
+   """
+   Pydantic model for schedule responses.
+   Contains status, message, and optional schedule information.
+   """
+   status: str
+   message: str
+   user_id: Optional[int] = None
+   schedule_data: Optional[Dict[str, Any]] = None
+   created_at: Optional[datetime] = None
+   updated_at: Optional[datetime] = None
