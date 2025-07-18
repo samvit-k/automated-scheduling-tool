@@ -30,7 +30,7 @@ def create_users_table():
    if conn is not None:
        try:
            cursor = conn.cursor()
-          
+           
            # Create users table with username and password columns
            # Both fields are TEXT to store the plain text values
            create_table_sql = """
@@ -41,11 +41,11 @@ def create_users_table():
                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
            );
            """
-          
+           
            cursor.execute(create_table_sql)
            conn.commit()
            print("Users table created successfully or already exists.")
-          
+           
        except Error as e:
            print(f"Error creating table: {e}")
        finally:
@@ -62,7 +62,7 @@ def create_schedules_table():
    if conn is not None:
        try:
            cursor = conn.cursor()
-          
+           
            # Create schedules table with the specified schema
            create_table_sql = """
            CREATE TABLE IF NOT EXISTS schedules (
@@ -74,11 +74,11 @@ def create_schedules_table():
                FOREIGN KEY (user_id) REFERENCES users (id)
            );
            """
-          
+           
            cursor.execute(create_table_sql)
            conn.commit()
            print("Schedules table created successfully or already exists.")
-          
+           
        except Error as e:
            print(f"Error creating schedules table: {e}")
        finally:
@@ -206,6 +206,36 @@ def get_schedule(user_id: int) -> Optional[Dict[str, Any]]:
            conn.close()
    else:
        return None
+
+def user_exists(user_id: int) -> bool:
+   """
+   Check if a user with the given user_id exists in the database.
+   
+   Args:
+       user_id (int): The user ID to check
+   
+   Returns:
+       bool: True if user exists, False otherwise
+   """
+   conn = create_connection()
+   if conn is not None:
+       try:
+           cursor = conn.cursor()
+           
+           # Query to check if user exists
+           query = "SELECT id FROM users WHERE id = ?"
+           cursor.execute(query, (user_id,))
+           
+           result = cursor.fetchone()
+           return result is not None
+               
+       except Error as e:
+           print(f"Error checking user existence: {e}")
+           return False
+       finally:
+           conn.close()
+   else:
+       return False
 
 def init_database():
    """

@@ -2,7 +2,7 @@ import openai
 import json
 from pydantic import BaseModel, ValidationError, Field, field_validator, RootModel
 import re
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Any
 from datetime import datetime, time
 import logging
 import os
@@ -54,7 +54,7 @@ prompt = f"""
    - start_time: string (formatted as "HH:MM AM/PM")
    - end_time: string (formatted as "HH:MM AM/PM")
    - priority: boolean (true if marked high-priority)
-   - recurrence: string (e.g., 'daily', 'none', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
+   - recurrence: string (use standard values: 'daily', 'weekly', 'monthly', 'none', or specific days like 'Monday', 'Tuesday', etc.)
 
 
    CORRECT Example Format:
@@ -65,7 +65,7 @@ prompt = f"""
        "start_time": "09:00 AM",
        "end_time": "10:00 AM",
        "priority": true,
-       "recurrence": "Monday, Wednesday, Friday"
+       "recurrence": "weekly"
        }},
        {{
        "task_name": "Physics Review",
@@ -107,6 +107,7 @@ prompt = f"""
    10. PRIORITY SCHEDULING: When user says "by [timeframe]", schedule that task for the earliest possible time within that constraint
    11. TASK CONSOLIDATION: Don't split single tasks across multiple days unless explicitly requested or necessary
    12. URGENCY INTERPRETATION: "urgent", "asap", "due soon", "by [date]" = high priority and immediate scheduling
+   13. RECURRENCE STANDARDS: Use 'daily' for every day tasks, 'weekly' for weekly recurring tasks, 'monthly' for monthly tasks, 'none' for one-time tasks
 """
 
 class Task(BaseModel):
@@ -139,9 +140,9 @@ class Task(BaseModel):
    @field_validator('recurrence')
    def valid_recurrence(cls, v):
        """Validate recurrence pattern."""
-       valid_patterns = ['daily', 'none', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-       if v.lower() not in valid_patterns and not any(day in v for day in valid_patterns[2:]):
-           raise ValueError(f'Invalid recurrence pattern: {v}. Must be "daily", "none", or specific days.')
+       valid_patterns = ['daily', 'weekly', 'monthly', 'none', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+       if v.lower() not in valid_patterns and not any(day in v for day in valid_patterns[4:]):
+           raise ValueError(f'Invalid recurrence pattern: {v}. Must be "daily", "weekly", "monthly", "none", or specific days.')
        return v
   
    @field_validator('priority')
@@ -177,7 +178,7 @@ class Schedule(RootModel[Dict[str, List[Task]]]):
        if not v:
            raise ValueError('Schedule cannot be empty')
        for date_key, tasks in v.items():
-           # Validate date format (MM/DD/YYYY)
+           # Validate date format (MM/DD/YYYY) - more flexible to handle both "7/21/2025" and "07/21/2025"
            date_pattern = r'^(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])/\d{4}$'
            if not re.match(date_pattern, date_key):
                raise ValueError(f'Invalid date format: {date_key}. Must be MM/DD/YYYY')
@@ -363,3 +364,162 @@ if __name__ == "__main__":
    user_prompt = "I have a lot of homework to do. I need to finish it by tomorrow. I have a test on Friday. I have a soccer game on Saturday. I have a doctor's appointment on Sunday. I have a job interview on Monday. I have a dentist appointment on Tuesday. I have a dentist appointment on Wednesday. I have a dentist appointment on Thursday. I have a dentist appointment on Friday. I have a dentist appointment on Saturday. I have a dentist appointment on Sunday."
    schedule = generate_schedule(user_prompt)
    print(schedule)
+
+def convert_date_schedule_to_weekday_schedule(date_schedule: Dict[str, List[Task]]) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Convert date-based schedule (MM/DD/YYYY) to weekday-based schedule (monday, tuesday, etc.)
+    
+    Args:
+        date_schedule: Dictionary with date keys (MM/DD/YYYY) and task lists as values
+        
+    Returns:
+        Dictionary with weekday keys (monday, tuesday, etc.) and task lists as values
+    """
+    weekday_schedule = {
+        "monday": [],
+        "tuesday": [],
+        "wednesday": [],
+        "thursday": [],
+        "friday": [],
+        "saturday": [],
+        "sunday": []
+    }
+    
+    # Map date to weekday with improved date parsing
+    for date_str, tasks in date_schedule.items():
+        try:
+            # Try multiple date formats to handle both "7/21/2025" and "07/21/2025"
+            date_obj = None
+            date_formats = ["%m/%d/%Y", "%#m/%#d/%Y", "%#m/%d/%Y", "%m/%#d/%Y"]
+            
+            for date_format in date_formats:
+                try:
+                    date_obj = datetime.strptime(date_str, date_format)
+                    break
+                except ValueError:
+                    continue
+            
+            if date_obj is None:
+                logger.warning(f"Could not parse date {date_str} with any format")
+                continue
+                
+            weekday_name = date_obj.strftime("%A").lower()
+            
+            if weekday_name in weekday_schedule:
+                # Convert Task objects to dictionaries and improve recurrence values
+                task_dicts = []
+                for task in tasks:
+                    task_dict = task.dict()
+                    # Improve recurrence values for better consistency
+                    recurrence = task_dict.get('recurrence', 'none')
+                    if recurrence in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+                        # Keep specific days as is
+                        pass
+                    elif recurrence.lower() in ['daily', 'weekly', 'monthly', 'none']:
+                        # Standardize case
+                        task_dict['recurrence'] = recurrence.lower()
+                    else:
+                        # Default to none for unrecognized patterns
+                        task_dict['recurrence'] = 'none'
+                    task_dicts.append(task_dict)
+                
+                weekday_schedule[weekday_name] = task_dicts
+        except Exception as e:
+            logger.warning(f"Error processing date {date_str}: {e}")
+            continue
+    
+    return weekday_schedule
+
+def complete_ai_schedule_workflow(user_prompt: str, user_id: int) -> Dict[str, Any]:
+    """
+    Complete workflow: prompt → LLM → convert → save to DB
+    
+    Args:
+        user_prompt: The user's scheduling request
+        user_id: The user ID to associate the schedule with
+        
+    Returns:
+        Dictionary with status and result information
+    """
+    try:
+        logger.info(f"Starting complete AI schedule workflow for user {user_id}")
+        
+        # Step 1: Generate schedule with LLM
+        logger.info("Generating schedule with LLM...")
+        ai_result = generate_schedule(user_prompt)
+        
+        if isinstance(ai_result, str):
+            logger.error(f"LLM generation failed: {ai_result}")
+            return {
+                "status": "error",
+                "message": f"Failed to generate schedule: {ai_result}",
+                "user_id": user_id
+            }
+        
+        # Step 2: Convert date-based to weekday-based
+        logger.info("Converting date-based schedule to weekday-based...")
+        weekday_schedule = convert_date_schedule_to_weekday_schedule(ai_result.root)
+        
+        # Step 3: Import and use database function
+        try:
+            from database import save_schedule, user_exists
+        except ImportError:
+            logger.error("Could not import database functions")
+            return {
+                "status": "error",
+                "message": "Database functions not available",
+                "user_id": user_id
+            }
+        
+        # Step 4: Validate user exists
+        if not user_exists(user_id):
+            logger.error(f"User {user_id} does not exist")
+            return {
+                "status": "error",
+                "message": "User not found",
+                "user_id": user_id
+            }
+        
+        # Step 5: Save to database
+        logger.info("Saving schedule to database...")
+        result = save_schedule(user_id, weekday_schedule)
+        
+        if result["status"] == "success":
+            logger.info("Schedule successfully saved to database")
+            return {
+                "status": "success",
+                "message": "AI schedule generated and saved successfully",
+                "user_id": user_id,
+                "schedule_data": weekday_schedule,
+                "original_schedule": ai_result.root,
+                "created_at": result.get("created_at"),
+                "updated_at": result.get("updated_at")
+            }
+        else:
+            logger.error(f"Database save failed: {result['message']}")
+            return {
+                "status": "error",
+                "message": f"Failed to save schedule: {result['message']}",
+                "user_id": user_id
+            }
+            
+    except Exception as e:
+        logger.error(f"Unexpected error in complete workflow: {e}")
+        return {
+            "status": "error",
+            "message": f"Unexpected error: {str(e)}",
+            "user_id": user_id
+        }
+
+def generate_and_save_schedule(user_prompt: str, user_id: int) -> Dict[str, Any]:
+    """
+    Simplified function for external use - generates and saves schedule in one call
+    
+    Args:
+        user_prompt: The user's scheduling request
+        user_id: The user ID to associate the schedule with
+        
+    Returns:
+        Dictionary with status and result information
+    """
+    return complete_ai_schedule_workflow(user_prompt, user_id)
