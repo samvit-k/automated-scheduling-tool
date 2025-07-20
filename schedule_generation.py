@@ -1,3 +1,6 @@
+import fitz
+import docx
+import io
 import openai
 import json
 from pydantic import BaseModel, ValidationError, Field, field_validator, RootModel
@@ -7,20 +10,176 @@ from datetime import datetime, time
 import logging
 import os
 from dotenv import load_dotenv
+import chromadb
+from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)
+UPLOAD_FOLDER = "uploads"
+MODEL = "text-embedding-3-small"
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+logger = logging.getLogger(__name__)
+
 model = "gpt-3.5-turbo"
+
+chroma_client = chromadb.Client()
+collection = chroma_client.create_collection(
+    name="my_collection",
+    embedding_function=OpenAIEmbeddingFunction(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        model_name="text-embedding-3-small"
+    )
+)
 
 # Get current date and time for the prompt
 current_datetime = datetime.now()
 current_date_str = current_datetime.strftime("%m/%d/%Y")
 current_day = current_datetime.strftime("%A")
 current_time_str = current_datetime.strftime("%I:%M %p")
+
+def extract_text_from_file(file_name: str, file_content: bytes):
+    """
+    Extracts plain text from an in-memory file content based on its extension.
+    Supports .txt, .pdf, and .docx files.
+    """
+    if file_name.endswith(".pdf"):
+        with fitz.open(stream=file_content, filetype="pdf") as doc:
+            text = ""
+            for page in doc:
+                text += page.get_text() # type: ignore
+            return text
+    elif file_name.endswith(".docx"):
+        doc = docx.Document(io.BytesIO(file_content))
+        return "\n".join(para.text for para in doc.paragraphs)
+    elif file_name.endswith(".txt"):
+        return file_content.decode("utf-8")
+    else:
+        return None
+
+def process_documents(uploaded_files: List[Dict]) -> List[Dict]:
+    docs = []
+    for file_info in uploaded_files:
+        try:
+            filename = file_info['filename']
+            file_content = file_info['content']
+            text = extract_text_from_file(filename, file_content)
+            
+            if text:
+                docs.append({
+                    "filename": filename, 
+                    "content": text.strip()
+                })
+                logger.info(f"Successfully processed {filename}")
+            else:
+                logger.warning(f"Could not extract text from {filename}")     
+        except Exception as e:
+            logger.error(f"Error processing file {filename}: {e}")
+
+    return docs
+
+def generate_chunks(documents_string):
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=100,
+        length_function=len,
+        separators=["\n\n", "\n", " ", ""]
+    )
+
+    chunks = text_splitter.split_text(documents_string)
+
+    return [{"id": i, "text": chunk} for i, chunk in enumerate(chunks)]
+
+def generate_single_embedding(client, text_chunk: str):
+    response = client.embeddings.create(
+        model=MODEL,
+        input=text_chunk
+    )
+    return response.data[0].embedding
+
+def generate_embedding(client, chunks):
+    """
+    Generates embeddings for a list of text chunks by calling the single embedding function.
+    This is used for bulk processing during ingestion.
+    """
+    embedded_data = []
+
+    for chunk in chunks:
+        embedding = generate_single_embedding(client, chunk['text'])
+        embedded_data.append({
+            "id": chunk['id'],
+            "text": chunk['text'],
+            "embedding": embedding
+        })
+
+    return embedded_data
+
+def embedding_insertion_to_collection(uploaded_files: List[Dict] = None):
+    try: 
+        collection.delete(where={"id": {"$ne": ""}})
+        
+        if uploaded_files is None:
+            logger.info("No files uploaded to process")
+            return
+            
+        docs = process_documents(uploaded_files)
+        documents_string = ''.join(doc['content'] for doc in docs).strip()
+        if documents_string:
+            chunks = generate_chunks(documents_string)
+            collection.add(
+                documents=[chunk['text'] for chunk in chunks],
+                ids=[str(chunk['id']) for chunk in chunks]
+            )
+            logger.info(f"Successfully loaded {len(chunks)} document chunks into vector database")
+        else:
+            logger.info("No documents found to insert into vector database")
+    except Exception as e:
+        logger.error(f"Error inserting embeddings: {e}")
+
+def collection_similarity_search(query: str, k: int = 5):
+    results = collection.query(
+        query_texts=[query],
+        n_results=k,
+        include=["distances"]
+    )
+    return results
+
+def generate_schedule_with_context(user_prompt: str, k: int = 5):
+    results = collection_similarity_search(user_prompt, k)
+    return results
+
+def generate_document_context(user_prompt: str):
+    """
+    Generate context from uploaded documents based on user prompt similarity.
+    Fixed to properly handle ChromaDB query results with error handling.
+    """
+    try:
+        search_results = collection_similarity_search(user_prompt, k=5)
+        
+        if search_results and 'documents' in search_results and search_results['documents']:
+            retrieved_documents = search_results['documents'][0]  # First query result
+            distances = search_results['distances'][0] if 'distances' in search_results else []
+        else:
+            logger.info("No documents found in search results")
+            return ""
+            
+        filtered_documents = []
+        for i, doc in enumerate(retrieved_documents):
+            if i < len(distances) and distances[i] < 1.0:
+                filtered_documents.append(doc)
+        
+        if filtered_documents:
+            context = "\n\n".join(filtered_documents)
+            logger.info(f"Retrieved {len(filtered_documents)} relevant document chunks")
+            return context
+        else:
+            logger.info("No relevant documents found for context")
+            return ""
+    except Exception as e:
+        logger.error(f"Error generating document context: {e}")
+        return ""
 
 prompt = f"""
    You are an expert AI assistant specializing in generating personalized, structured daily schedules based on a user's goals, preferences, and contextual data. The user provides a scheduling prompt describing their needs, including classwork, extracurricular activities, personal tasks, and other commitments.
@@ -304,7 +463,12 @@ def generate_schedule(user_prompt: str, max_retries: int = 3) -> Union[Schedule,
            logger.info(f"Generating schedule (attempt {attempt + 1}/{max_retries})")
           
            # Create the full prompt with user input
-           full_prompt = f"{prompt}\n\nUser Request: {user_prompt}\n\nPlease generate a schedule in the exact JSON format specified above."
+           full_prompt = f"""
+            Prompt: {prompt} 
+            User Request: {user_prompt}
+            Context: {generate_document_context(user_prompt)}
+            Please generate a schedule in the exact JSON format specified above.
+            """
           
            response = openai.chat.completions.create(
                model=model,
