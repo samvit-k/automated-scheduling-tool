@@ -75,7 +75,7 @@
     
     /* Layout */
     --container-max: 1280px;
-    --navbar-height: 4rem;
+    --navbar-height: 5rem;
     
     /* Dark gradient overlay for hero */
     --gradient-dark: linear-gradient(135deg, hsl(220 13% 9% / 0.9), hsl(220 13% 16% / 0.8));

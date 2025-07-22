@@ -65,16 +65,23 @@ export default function Landing() {
   return (
     <div className="min-h-screen pt-navbar">
       {/* Hero Section */}
-      <section 
-        className="relative min-h-screen flex items-center overflow-hidden"
-        style={{
-          backgroundImage: `url(${heroBackground})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-dark"></div>
+      <section className="relative min-h-screen flex items-center overflow-hidden">
+        {/* Video Background */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          poster={heroBackground}
+        >
+          <source src="/videos/hero-background.mp4" type="video/mp4" />
+          <source src="/videos/hero-background.webm" type="video/webm" />
+        </video>
+        
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/40"></div>
+        
         <div className="relative container-centered">
           <div className="text-center animate-fade-in">
             <h1 className="text-6xl lg:text-7xl font-bold text-white mb-8">

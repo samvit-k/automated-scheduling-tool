@@ -19,7 +19,7 @@ export function Navigation() {
           {/* Logo */}
           <Link 
             to="/" 
-            className="text-xl font-serif font-semibold hover:text-primary transition-fast"
+            className="text-2xl font-serif font-semibold hover:text-primary transition-fast"
           >
             ScheduleAI
           </Link>
@@ -31,7 +31,7 @@ export function Navigation() {
                 key={item.name}
                 to={item.href}
                 className={cn(
-                  "text-sm font-medium transition-fast hover:text-primary",
+                  "text-base font-medium transition-fast hover:text-primary",
                   location.pathname === item.href
                     ? "text-primary"
                     : "text-muted-foreground"
@@ -48,16 +48,16 @@ export function Navigation() {
               <div className="flex items-center space-x-3">
                 <Button 
                   variant="ghost" 
-                  size="sm" 
+                  size="default" 
                   asChild
-                  className="hover-glow transition-fast"
+                  className="hover-glow transition-fast text-base"
                 >
                   <Link to="/login">Log in</Link>
                 </Button>
                 <Button 
-                  size="sm" 
+                  size="default" 
                   asChild
-                  className="hover-glow transition-fast"
+                  className="hover-glow transition-fast text-base"
                 >
                   <Link to="/signup">Sign up</Link>
                 </Button>
