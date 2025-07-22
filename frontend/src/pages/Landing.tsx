@@ -1,156 +1,213 @@
-import { Link } from "react-router-dom";
-import { Brain, FileText, Palette, ArrowRight, Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import BenefitCard from "@/components/BenefitCard";
-import Navigation from "@/components/Navigation";
+import { ArrowRight, Brain, Upload, Palette } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import heroBackground from '@/assets/hero-background.jpg';
 
-const Landing = () => {
+const benefits = [
+  {
+    icon: Brain,
+    title: 'AI-Generated Schedules Tailored to You',
+    description: 'Smart algorithms learn your preferences and create optimal schedules that fit your lifestyle.'
+  },
+  {
+    icon: Upload,
+    title: 'Upload Docs for Context-Aware Planning',
+    description: 'Share your documents and let AI understand your commitments for more accurate scheduling.'
+  },
+  {
+    icon: Palette,
+    title: 'Beautiful Dark Interface for Focus',
+    description: 'Elegantly designed dark theme that reduces eye strain and enhances productivity.'
+  }
+];
+
+const scheduleEvents = [
+  {
+    time: '9:00 AM',
+    duration: '2h',
+    title: 'Morning Strategy Session',
+    description: 'Review quarterly objectives and plan implementation',
+    color: 'bg-blue-500/20 border-blue-500/30'
+  },
+  {
+    time: '11:30 AM',
+    duration: '1h 30m',
+    title: 'Client Presentation Prep',
+    description: 'Finalize slides and practice delivery',
+    color: 'bg-amber-500/20 border-amber-500/30'
+  },
+  {
+    time: '1:00 PM',
+    duration: '1h',
+    title: 'Lunch & Networking',
+    description: 'Industry meetup at downtown café',
+    color: 'bg-green-500/20 border-green-500/30'
+  },
+  {
+    time: '3:00 PM',
+    duration: '3h',
+    title: 'Development Sprint',
+    description: 'Focus time for feature implementation',
+    color: 'bg-purple-500/20 border-purple-500/30'
+  },
+  {
+    time: '6:00 PM',
+    duration: '45m',
+    title: 'Team Retrospective',
+    description: 'Weekly team sync and feedback session',
+    color: 'bg-pink-500/20 border-pink-500/30'
+  }
+];
+
+export default function Landing() {
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <Navigation />
-      
+    <div className="min-h-screen pt-navbar">
       {/* Hero Section */}
-      <section className="relative pt-20 pb-32">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
-          <div className="animate-fade-in">
-            <h1 className="text-5xl lg:text-7xl font-bold text-foreground mb-8 font-display leading-tight">
-              Your AI-Powered Schedule,{" "}
-              <span className="text-primary">Instantly</span>
+      <section 
+        className="relative min-h-screen flex items-center overflow-hidden"
+        style={{
+          backgroundImage: `url(${heroBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-dark"></div>
+        <div className="relative container-centered">
+          <div className="text-center animate-fade-in">
+            <h1 className="text-6xl lg:text-7xl font-bold text-white mb-8">
+              Your AI-Powered Schedule,{' '}
+              <span className="text-transparent bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text">
+                Instantly
+              </span>
             </h1>
-            
-            <p className="text-xl lg:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto font-display font-normal leading-relaxed">
-              Turn your ideas into perfectly balanced plans in seconds. 
-              Upload documents, describe your goals, and watch AI create your ideal schedule.
+            <p className="text-2xl lg:text-3xl text-gray-200 mb-10 max-w-4xl mx-auto font-serif">
+              Turn your ideas into perfectly balanced plans in seconds. Let AI understand your commitments and create schedules that actually work for your life.
             </p>
-            
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/workspace">
-                <Button className="btn-hero group">
+              <Button 
+                size="lg" 
+                asChild
+                className="hover-lift transition-normal text-xl px-10 py-8"
+              >
+                <Link to="/signup">
                   Get Started for Free
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                asChild
+                className="text-xl px-10 py-8 bg-white/10 border-white/20 text-white hover:bg-white/20 transition-normal"
+              >
+                <Link to="/workspace">View Demo</Link>
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 bg-background">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16 animate-slide-up">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 font-display">
-              Why Choose Schedulo?
+      <section className="py-12 lg:py-16 bg-surface">
+        <div className="container-centered">
+          <div className="text-center mb-12">
+            <h2 className="text-5xl lg:text-6xl font-bold mb-6">
+              Why Choose ScheduleAI?
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Experience the future of planning with AI-powered intelligence and beautiful design.
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto font-serif">
+              Combining the power of artificial intelligence with intuitive design to revolutionize how you plan your time.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="animate-scale-in" style={{ animationDelay: "0.1s" }}>
-              <BenefitCard
-                icon={<Brain className="h-6 w-6 text-white" />}
-                title="AI-Generated Schedules"
-                description="Smart algorithms analyze your preferences and constraints to create perfectly balanced schedules tailored to your unique needs."
-                color="bg-warm-purple"
-              />
-            </div>
-            
-            <div className="animate-scale-in" style={{ animationDelay: "0.2s" }}>
-              <BenefitCard
-                icon={<FileText className="h-6 w-6 text-white" />}
-                title="Context-Aware Planning"
-                description="Upload documents, share your goals, and let our AI understand the full context to create truly intelligent schedules."
-                color="bg-warm-orange"
-              />
-            </div>
-            
-            <div className="animate-scale-in" style={{ animationDelay: "0.3s" }}>
-              <BenefitCard
-                icon={<Palette className="h-6 w-6 text-white" />}
-                title="Beautiful & Minimal Design"
-                description="Switch between light and dark themes in a clean, distraction-free interface that keeps you focused on what matters."
-                color="bg-warm-green"
-              />
-            </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {benefits.map((benefit, index) => (
+              <Card 
+                key={benefit.title}
+                className="hover-lift transition-normal animate-slide-up border-card-border shadow-soft"
+                style={{ animationDelay: `${index * 150}ms` }}
+              >
+                <CardHeader className="text-center">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <benefit.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle className="text-2xl">{benefit.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-center text-lg">
+                    {benefit.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Schedule Preview Section */}
-      <section className="py-20 bg-secondary/30">
-        <div className="max-w-5xl mx-auto px-6 lg:px-8">
+      <section className="py-12 lg:py-16">
+        <div className="container-centered">
           <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 font-display">
-              See It In Action
+            <h2 className="text-5xl lg:text-6xl font-bold mb-6">
+              See Your Perfect Schedule Come to Life
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Watch how Schedulo transforms your requirements into a beautifully organized schedule.
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto font-serif">
+              Watch as AI transforms your requirements into beautifully organized, actionable schedules.
             </p>
           </div>
-          
-          {/* Mock Schedule Preview */}
-          <div className="card-elevated p-8 bg-card animate-slide-up max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-foreground font-display">
-                Your Generated Schedule
-              </h3>
-              <Calendar className="h-5 w-5 text-primary" />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="bg-warm-purple/10 border border-warm-purple/20 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-warm-purple">9:00 AM</span>
-                  <span className="text-xs text-muted-foreground">2h</span>
-                </div>
-                <h4 className="font-semibold text-foreground mb-1">Deep Work Session</h4>
-                <p className="text-sm text-muted-foreground">Focus on project proposal</p>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-card border border-card-border rounded-lg p-4 shadow-elevated animate-scale-in">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-border-subtle">
+                <h3 className="text-2xl font-semibold flex items-center">
+                  📅 Today's Schedule
+                </h3>
+                <span className="text-xs text-muted-foreground">Monday, July 21st, 2025</span>
               </div>
               
-              <div className="bg-warm-orange/10 border border-warm-orange/20 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-warm-orange">1:00 PM</span>
-                  <span className="text-xs text-muted-foreground">1h</span>
-                </div>
-                <h4 className="font-semibold text-foreground mb-1">Team Meeting</h4>
-                <p className="text-sm text-muted-foreground">Weekly sync & planning</p>
-              </div>
-              
-              <div className="bg-warm-green/10 border border-warm-green/20 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-warm-green">3:30 PM</span>
-                  <span className="text-xs text-muted-foreground">30m</span>
-                </div>
-                <h4 className="font-semibold text-foreground mb-1">Break & Refresh</h4>
-                <p className="text-sm text-muted-foreground">Recharge for afternoon tasks</p>
+              <div className="space-y-3">
+                {scheduleEvents.map((event, index) => (
+                  <div 
+                    key={event.title}
+                    className={cn(
+                      "p-4 rounded-lg border-2 transition-all duration-300 hover:shadow-soft",
+                      event.color,
+                      "animate-slide-up"
+                    )}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="text-base font-semibold">{event.time}</span>
+                          <span className="text-xs text-muted-foreground">{event.duration}</span>
+                        </div>
+                        <h4 className="text-lg font-semibold mb-1">{event.title}</h4>
+                        <p className="text-sm text-muted-foreground">{event.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Final CTA Section */}
-      <section className="py-20 bg-background">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 font-display">
-            Ready to Transform Your Planning?
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of users who have revolutionized their productivity with AI-powered scheduling.
-          </p>
-          
-          <Link to="/workspace">
-            <Button className="btn-hero group">
-              Start Planning Now
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          <div className="text-center mt-12">
+            <Button 
+              size="lg" 
+              asChild
+              className="hover-lift transition-normal text-xl px-10 py-8"
+            >
+              <Link to="/signup">
+                Start Planning Now
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
             </Button>
-          </Link>
+          </div>
         </div>
       </section>
     </div>
   );
-};
-
-export default Landing;
+}

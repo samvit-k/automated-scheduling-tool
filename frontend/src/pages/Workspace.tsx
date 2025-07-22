@@ -1,209 +1,166 @@
-import { useState } from "react";
-import { Send, Plus, Calendar, Clock, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import Navigation from "@/components/Navigation";
+import { useState } from 'react';
+import { Plus, Send, Upload, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
-interface ScheduleEvent {
-  id: string;
-  title: string;
-  time: string;
-  duration: string;
-  description: string;
-  color: string;
-}
+const scheduleEvents = [
+  {
+    time: '9:00 AM',
+    duration: '2h',
+    title: 'Morning Strategy Session',
+    description: 'Review quarterly objectives and plan implementation',
+    color: 'bg-blue-500/20 border-blue-500/30'
+  },
+  {
+    time: '11:30 AM',
+    duration: '1h 30m',
+    title: 'Client Presentation Prep',
+    description: 'Finalize slides and practice delivery',
+    color: 'bg-amber-500/20 border-amber-500/30'
+  },
+  {
+    time: '1:00 PM',
+    duration: '1h',
+    title: 'Lunch & Networking',
+    description: 'Industry meetup at downtown café',
+    color: 'bg-green-500/20 border-green-500/30'
+  },
+  {
+    time: '3:00 PM',
+    duration: '3h',
+    title: 'Development Sprint',
+    description: 'Focus time for feature implementation',
+    color: 'bg-purple-500/20 border-purple-500/30'
+  },
+  {
+    time: '6:00 PM',
+    duration: '45m',
+    title: 'Team Retrospective',
+    description: 'Weekly team sync and feedback session',
+    color: 'bg-pink-500/20 border-pink-500/30'
+  }
+];
 
-const Workspace = () => {
-  const [prompt, setPrompt] = useState("");
-  const [events, setEvents] = useState<ScheduleEvent[]>([
-    {
-      id: "1",
-      title: "Morning Strategy Session",
-      time: "9:00 AM",
-      duration: "2h",
-      description: "Review quarterly objectives and plan implementation",
-      color: "bg-warm-purple"
-    },
-    {
-      id: "2",
-      title: "Client Presentation Prep",
-      time: "11:30 AM",
-      duration: "1h 30m",
-      description: "Finalize slides and practice delivery",
-      color: "bg-warm-orange"
-    },
-    {
-      id: "3",
-      title: "Lunch & Networking",
-      time: "1:00 PM",
-      duration: "1h",
-      description: "Industry meetup at downtown cafe",
-      color: "bg-warm-green"
-    },
-    {
-      id: "4",
-      title: "Development Sprint",
-      time: "3:00 PM",
-      duration: "3h",
-      description: "Focus time for feature implementation",
-      color: "bg-primary"
-    },
-    {
-      id: "5",
-      title: "Team Retrospective",
-      time: "6:00 PM",
-      duration: "45m",
-      description: "Weekly team sync and feedback session",
-      color: "bg-warm-pink"
-    }
-  ]);
+export default function Workspace() {
+  const [prompt, setPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim()) return;
     
-    // Here you would integrate with your AI service
-    console.log("Generating schedule for:", prompt);
-    setPrompt("");
+    setIsGenerating(true);
+    // Simulate AI processing
+    setTimeout(() => {
+      setIsGenerating(false);
+      setPrompt('');
+    }, 2000);
   };
 
   const handleFileUpload = () => {
     // Handle file upload logic
-    console.log("Upload file clicked");
+    console.log('File upload triggered');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <Navigation />
-      
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-8 pb-20">
-        {/* Header */}
-        <div className="mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold text-foreground mb-3 font-display">
-            Your AI Workspace
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Describe your goals and watch AI create the perfect schedule for you.
-          </p>
-        </div>
-
+    <div className="min-h-screen pt-navbar bg-background">
+      <div className="container-centered py-8">
         {/* Schedule Display */}
-        <div className="mb-8 animate-slide-up">
-          <div className="card-elevated p-6 bg-card">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <Calendar className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-semibold text-foreground font-display">
-                  Today's Schedule
-                </h2>
-              </div>
-              <div className="text-sm text-muted-foreground flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Monday, July 21st, 2025
-              </div>
-            </div>
-            
-            {/* Schedule Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-              {events.map((event, index) => (
-                <div
-                  key={event.id}
-                  className={`${event.color}/10 border border-current/20 rounded-xl p-4 hover:scale-[1.02] transition-all duration-300 cursor-pointer animate-scale-in`}
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`text-sm font-medium ${event.color.replace('bg-', 'text-')}`}>
-                      {event.time}
-                    </span>
-                    <span className="text-xs text-muted-foreground bg-background/50 px-2 py-1 rounded-md">
-                      {event.duration}
-                    </span>
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-2 leading-tight">
-                    {event.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {event.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* AI Prompt Interface */}
-        <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
-          <div className="prompt-bar p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="flex items-start gap-4">
-                <div className="flex-1">
-                  <Textarea
-                    placeholder="Type your request here... (e.g., 'Schedule a productive Monday with 2 hours of deep work, team meetings, and time for lunch')"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    className="min-h-[100px] resize-none border-0 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none"
-                  />
+        <div className="mb-8">
+          <Card className="shadow-elevated border-card-border animate-fade-in">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-border-subtle">
+                <h1 className="text-4xl font-semibold flex items-center">
+                  📅 Today's Schedule
+                </h1>
+                <div className="flex items-center text-muted-foreground">
+                  <Clock className="h-4 w-4 mr-2" />
+                  <span className="text-sm">Monday, July 21st, 2025</span>
                 </div>
               </div>
               
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleFileUpload}
-                    className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg"
+              <div className="space-y-4">
+                {scheduleEvents.map((event, index) => (
+                  <div 
+                    key={event.title}
+                    className={cn(
+                      "p-6 rounded-lg border-2 transition-all duration-300 hover:shadow-soft animate-slide-up",
+                      event.color
+                    )}
+                    style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Upload Files
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    Add context documents
-                  </span>
-                </div>
-                
-                <Button
-                  type="submit"
-                  disabled={!prompt.trim()}
-                  className="btn-hero px-6 py-2 text-sm"
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  Generate Schedule
-                </Button>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4 mb-2">
+                          <span className="text-lg font-semibold">{event.time}</span>
+                          <span className="text-sm text-muted-foreground bg-background/50 px-2 py-1 rounded-full">
+                            {event.duration}
+                          </span>
+                        </div>
+                        <h3 className="text-2xl font-semibold mb-2">{event.title}</h3>
+                        <p className="text-muted-foreground">{event.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </form>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-8 animate-fade-in" style={{ animationDelay: "0.4s" }}>
-          <h3 className="text-lg font-semibold text-foreground mb-4 font-display">
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="text-left p-4 rounded-xl border border-border hover:border-primary/30 hover:bg-primary-soft transition-all duration-300">
-              <FileText className="h-5 w-5 text-primary mb-2" />
-              <div className="font-medium text-foreground mb-1">Import Calendar</div>
-              <div className="text-sm text-muted-foreground">Sync with existing calendars</div>
-            </button>
+        {/* AI Prompt Interface */}
+        <Card className="shadow-floating border-card-border animate-slide-up">
+          <CardContent className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFileUpload}
+                  className="flex items-center gap-2 hover-glow transition-fast"
+                >
+                  <Plus className="h-4 w-4" />
+                  <Upload className="h-4 w-4" />
+                </Button>
+                
+                <div className="flex-1 relative">
+                  <Input
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Type your request here... (e.g., 'Schedule a 2-hour design review tomorrow morning')"
+                    className="h-12 pr-12 input-focus text-base"
+                    disabled={isGenerating}
+                  />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!prompt.trim() || isGenerating}
+                    className="absolute right-2 top-2 h-8 w-8 p-0 hover-glow transition-fast"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              {isGenerating && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  <span className="ml-2">AI is generating your schedule...</span>
+                </div>
+              )}
+            </form>
             
-            <button className="text-left p-4 rounded-xl border border-border hover:border-primary/30 hover:bg-primary-soft transition-all duration-300">
-              <Calendar className="h-5 w-5 text-primary mb-2" />
-              <div className="font-medium text-foreground mb-1">Template Library</div>
-              <div className="text-sm text-muted-foreground">Choose from pre-built schedules</div>
-            </button>
-            
-            <button className="text-left p-4 rounded-xl border border-border hover:border-primary/30 hover:bg-primary-soft transition-all duration-300">
-              <Clock className="h-5 w-5 text-primary mb-2" />
-              <div className="font-medium text-foreground mb-1">Time Preferences</div>
-              <div className="text-sm text-muted-foreground">Set your working hours</div>
-            </button>
-          </div>
-        </div>
+            <div className="mt-4 text-xs text-muted-foreground text-center">
+              💡 Try: "Add a 30-minute break after lunch" or "Move the client meeting to 2 PM"
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
-};
-
-export default Workspace;
+}

@@ -6,17 +6,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function Login() {
+export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Login attempted with:', formData);
+    // Handle sign up logic here
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+    console.log('Sign up attempted with:', formData);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,13 +38,29 @@ export default function Login() {
       <div className="w-full max-w-md animate-fade-in">
         <Card className="shadow-dramatic border-card-border">
           <CardHeader className="text-center space-y-2">
-            <CardTitle className="text-2xl font-serif">Welcome back</CardTitle>
+            <CardTitle className="text-2xl font-serif">Create your account</CardTitle>
             <CardDescription className="text-base">
-              Sign in to your account to continue
+              Join thousands of users who plan smarter with AI
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Full name
+                </Label>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="input-focus h-12"
+                  required
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
                   Email address
@@ -63,7 +86,7 @@ export default function Login() {
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
+                    placeholder="Create a password"
                     value={formData.password}
                     onChange={handleInputChange}
                     className="input-focus h-12 pr-12"
@@ -85,30 +108,54 @@ export default function Login() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                  Confirm password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Confirm your password"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    className="input-focus h-12 pr-12"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-2 h-8 w-8 p-0 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full h-12 hover-glow transition-normal text-base font-medium"
               >
-                Sign in
+                Create account
               </Button>
             </form>
 
-            <div className="text-center space-y-4">
-              <Link 
-                to="/forgot-password" 
-                className="text-sm text-primary hover:text-primary-hover transition-fast"
-              >
-                Forgot your password?
-              </Link>
-              
+            <div className="text-center">
               <div className="border-t border-border-subtle pt-4">
                 <p className="text-sm text-muted-foreground">
-                  Don't have an account?{' '}
+                  Already have an account?{' '}
                   <Link 
-                    to="/signup" 
+                    to="/login" 
                     className="text-primary hover:text-primary-hover font-medium transition-fast"
                   >
-                    Sign up
+                    Sign in
                   </Link>
                 </p>
               </div>

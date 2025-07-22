@@ -1,102 +1,71 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Link, useLocation } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
-const Navigation = () => {
-  const [darkMode, setDarkMode] = useState(false);
+import { cn } from '@/lib/utils';
+
+const navItems = [
+  { name: 'Home', href: '/' },
+  { name: 'Workspace', href: '/workspace' },
+  { name: 'Pricing', href: '/pricing' },
+];
+
+export function Navigation() {
   const location = useLocation();
 
-  useEffect(() => {
-    const isDark = localStorage.getItem("darkMode") === "true";
-    setDarkMode(isDark);
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-    }
-  }, []);
-
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem("darkMode", newDarkMode.toString());
-    
-    if (newDarkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  };
-
-  const isActive = (path: string) => location.pathname === path;
-
   return (
-    <nav className="navbar">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border-subtle">
+      <div className="container-centered">
+        <div className="flex items-center justify-between h-navbar">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <span className="font-display text-2xl font-semibold text-foreground">
-              Schedulo
-            </span>
+          <Link 
+            to="/" 
+            className="text-xl font-serif font-semibold hover:text-primary transition-fast"
+          >
+            ScheduleAI
           </Link>
 
-          {/* Center Navigation - Only show on non-auth pages */}
-          {location.pathname !== "/login" && (
-            <div className="hidden md:flex items-center space-x-8">
+          {/* Navigation Links */}
+          <div className="hidden md:flex items-center space-x-8">
+            {navItems.map((item) => (
               <Link
-                to="/"
-                className={`btn-ghost ${
-                  isActive("/") ? "text-primary bg-primary-soft" : ""
-                }`}
+                key={item.name}
+                to={item.href}
+                className={cn(
+                  "text-sm font-medium transition-fast hover:text-primary",
+                  location.pathname === item.href
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                )}
               >
-                Home
+                {item.name}
               </Link>
-              <Link
-                to="/workspace"
-                className={`btn-ghost ${
-                  isActive("/workspace") ? "text-primary bg-primary-soft" : ""
-                }`}
-              >
-                Workspace
-              </Link>
-              <Link
-                to="#"
-                className="btn-ghost"
-              >
-                Pricing
-              </Link>
-            </div>
-          )}
+            ))}
+          </div>
 
-          {/* Right side controls */}
+          {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
-            {/* Dark mode toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleDarkMode}
-              className="h-9 w-9 rounded-lg"
-            >
-              {darkMode ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-            </Button>
-
-            {/* Auth buttons */}
-            {location.pathname !== "/login" && (
-              <Link to="/login">
-                <Button variant="outline" className="rounded-lg">
-                  Log in
+            {location.pathname !== '/login' && location.pathname !== '/signup' && (
+              <div className="flex items-center space-x-3">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  asChild
+                  className="hover-glow transition-fast"
+                >
+                  <Link to="/login">Log in</Link>
                 </Button>
-              </Link>
+                <Button 
+                  size="sm" 
+                  asChild
+                  className="hover-glow transition-fast"
+                >
+                  <Link to="/signup">Sign up</Link>
+                </Button>
+              </div>
             )}
           </div>
         </div>
       </div>
     </nav>
   );
-};
-
-export default Navigation;
+}
